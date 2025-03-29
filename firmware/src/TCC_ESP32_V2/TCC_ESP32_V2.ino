@@ -86,8 +86,9 @@ void setup() {
   SPI.begin(5, 16, 17, 18); // SCK, MISO, MOSI, SS
   os_init();
   LMIC_reset();
-
+  LMIC_selectSubBand(1);  // <- ESSENCIAL PARA HELIUM US915
   LMIC_startJoining();
+
   Serial.println("LMIC iniciado com sucesso!");
 }
 
@@ -101,7 +102,7 @@ void loop() {
 
   if (digitalRead(BUTTON_PIN) == LOW && millis() - lastButtonPress > 2000 && (LMIC.devaddr != 0)) {
     lastButtonPress = millis();
-    Serial.println("Botão pressionado! Enviando agora...");
+    Serial.println("🔘 Botão pressionado! Enviando agora...");
     do_send();
   }
 }
