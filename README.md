@@ -42,6 +42,7 @@ Este trabalho apresenta um estudo sobre a segurança em redes de Internet das Co
 ---
 
 ## 🗂 Estrutura do Projeto
+```
 📦 helium-iot-security
 ├── firmware/                  # Código para ESP32 + LoRa + sensores
 │   ├── src/                   # Código-fonte principal (.ino ou .cpp/.h)
@@ -65,6 +66,7 @@ Este trabalho apresenta um estudo sobre a segurança em redes de Internet das Co
 │
 ├── .gitignore
 └── README.md
+```
 
 
 ---
