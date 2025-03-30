@@ -38,10 +38,18 @@ def handle_lorawan_message(event, context):
         print(f"Erro geral: {e}")
         return "Internal error", 500
 
-# Cloud Run entrypoint
+# ========== FLASK APP PARA CLOUD RUN ==========
 app = Flask(__name__)
 
 @app.route("/", methods=["POST"])
-def app_entry():
-    json_data = request.get_json(silent=True)
-    return handle_lorawan_message({"data": base64.b64encode(json.dumps(json_data).encode()).decode()}, None)
+def handle_request():
+    try:
+        body = request.get_json(silent=True)
+        if not body:
+            return "Empty request", 400
+
+        event = {"data": base64.b64encode(json.dumps(body).encode()).decode()}
+        return handle_lorawan_message(event, None)
+    except Exception as e:
+        print(f"Erro inesperado: {e}")
+        return "Internal error", 500
