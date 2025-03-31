@@ -16,6 +16,12 @@ gcloud config set project helium-iot-tcc
 
 ## Teste 1: Enviar mensagem diretamente para o tópico Pub/Sub
 
+```bash
+gcloud pubsub topics publish helium-data --message="{\"device_eui\":\"test-123456789ABCDEF0\",\"temperature\":22.5,\"humidity\":60.2}"
+
+```
+
+## Teste 2: Enviar para função que salva no GCS via CURL
 Antes de enviar, converta o JSON em base64 (pode usar sites online ou script `.bat` incluído):
 
 ```bash
@@ -25,18 +31,19 @@ echo '{"device_eui":"test-123456789ABCDEF0","temperature":22.5,"humidity":60.2}'
 Exemplo de envio:
 
 ```bash
-gcloud pubsub topics publish helium-data --message="eyJkZXZpY2VfZXVpIjoidGVzdC0xMjM0NTY3ODlBQkNERUYwIiwidGVtcGVyYXR1cmUiOjIyLjUsImh1bWlkaXR5Ijo2MC4yfQ=="
-```
-
-## Teste 2: Enviar para função que salva no GCS via CURL
-
-```bash
 curl -X POST "https://save-payload-to-gcs-970915750461.us-central1.run.app/" \
   -H "Content-Type: application/json" \
   -d "{\"message\": {\"data\": \"eyJkZXZpY2VfZXVpIjoidGVzdC0xMjM0NTY3ODlBQkNERUYwIiwidGVtcGVyYXR1cmUiOjIyLjUsImh1bWlkaXR5Ijo2MC4yfQ==\"}}"
 ```
 
 ## Teste 3: Enviar para função que salva no BigQuery via CURL
+Antes de enviar, converta o JSON em base64 (pode usar sites online ou script `.bat` incluído):
+
+```bash
+echo '{"device_eui":"test-123456789ABCDEF0","temperature":22.5,"humidity":60.2}' | openssl base64
+```
+
+Exemplo de envio:
 
 ```bash
 curl -X POST "https://insert-payload-to-bigquery-970915750461.us-central1.run.app/" \
