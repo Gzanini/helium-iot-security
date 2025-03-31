@@ -18,7 +18,7 @@ def handle_lorawan_message(event, context):
 
     payload["timestamp"] = datetime.utcnow().isoformat() + "Z"
 
-    device_eui = payload.get("devEUI", "unknown_device")
+    device_eui = payload.get("device_eui", "unknown_device")
     timestamp_str = datetime.utcnow().strftime("%Y%m%dT%H%M%S")
     filename = f"raw/{device_eui}_{timestamp_str}.json"
 
@@ -33,22 +33,20 @@ def handle_lorawan_message(event, context):
         print(f"Erro ao salvar no GCS: {e}")
         return "GCS Error", 500
 
-# ========== FLASK APP PARA CLOUD RUN ==========
+# ========== FLASK APP ==========
 app = Flask(__name__)
 
 @app.route("/", methods=["POST"])
 def handle_request():
     try:
         body = request.get_json(silent=True)
-        if not body:
-            return "Empty request", 400
-
-        event = {"data": base64.b64encode(json.dumps(body).encode()).decode()}
+        event = {"data": body.get("message", {}).get("data", "")}
         return handle_lorawan_message(event, None)
     except Exception as e:
         print(f"Erro inesperado: {e}")
         return "Internal error", 500
 
+# ========== EXECUTA O FLASK ==========
 if __name__ == "__main__":
     import os
     port = int(os.environ.get("PORT", 8080))

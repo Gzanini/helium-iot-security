@@ -22,10 +22,10 @@ def handle_lorawan_message(event, context):
         client = bigquery.Client()
         table_id = "helium-iot-tcc.helium_data.sensor_readings"
         rows_to_insert = [{
-            "device_eui": payload.get("devEUI", "unknown"),
+            "device_eui": payload.get("device_eui", "unknown"),
             "timestamp": payload["timestamp"],
-            "temperature": float(payload.get("decoded", {}).get("temperature", 0)),
-            "humidity": float(payload.get("decoded", {}).get("humidity", 0))
+            "temperature": float(payload.get("temperature", 0)),
+            "humidity": float(payload.get("humidity", 0))
         }]
         errors = client.insert_rows_json(table_id, rows_to_insert)
         if errors:
@@ -38,22 +38,20 @@ def handle_lorawan_message(event, context):
         print(f"Erro geral: {e}")
         return "Internal error", 500
 
-# ========== FLASK APP PARA CLOUD RUN ==========
+# ========== FLASK APP ==========
 app = Flask(__name__)
 
 @app.route("/", methods=["POST"])
 def handle_request():
     try:
         body = request.get_json(silent=True)
-        if not body:
-            return "Empty request", 400
-
-        event = {"data": base64.b64encode(json.dumps(body).encode()).decode()}
+        event = {"data": body.get("message", {}).get("data", "")}
         return handle_lorawan_message(event, None)
     except Exception as e:
         print(f"Erro inesperado: {e}")
         return "Internal error", 500
 
+# ========== EXECUTA O FLASK ==========
 if __name__ == "__main__":
     import os
     port = int(os.environ.get("PORT", 8080))
