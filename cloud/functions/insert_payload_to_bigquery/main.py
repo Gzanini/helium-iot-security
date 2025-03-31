@@ -1,6 +1,6 @@
 import base64
 import json
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from google.cloud import bigquery
 from flask import Flask, request
 
@@ -8,12 +8,10 @@ from flask import Flask, request
 def handle_lorawan_message(event, context):
     print("Iniciando processamento do payload")
 
-    # Se a chave 'data' não estiver presente
     if 'data' not in event:
         print("Evento sem campo 'data'")
         return "Missing data", 400
 
-    # Decodifica o payload base64
     try:
         decoded_data = base64.b64decode(event['data']).decode('utf-8')
         print(f"Payload decodificado: {decoded_data}")
@@ -22,10 +20,10 @@ def handle_lorawan_message(event, context):
         print(f"Erro ao decodificar payload: {e}")
         return "Invalid JSON", 400
 
-    # Adiciona timestamp
-    payload["timestamp"] = datetime.utcnow().isoformat() + "Z"
+    # Define horário em UTC-3 (Horário de Brasília)
+    br_time = datetime.now(timezone.utc) + timedelta(hours=-3)
+    payload["timestamp"] = br_time.isoformat()
 
-    # Envia para o BigQuery
     try:
         client = bigquery.Client()
         table_id = "helium-iot-tcc.helium_data.sensor_readings"
@@ -47,7 +45,6 @@ def handle_lorawan_message(event, context):
         print(f"Erro ao acessar o BigQuery: {e}")
         return "BigQuery Error", 500
 
-
 # ========== FLASK APP ==========
 app = Flask(__name__)
 
@@ -60,14 +57,12 @@ def handle_request():
         if body and "message" in body:
             event = body["message"]
         else:
-            # fallback para casos onde vem direto apenas o 'data'
             event = {"data": body}
 
         return handle_lorawan_message(event, None)
     except Exception as e:
         print(f"Erro inesperado: {e}")
         return "Internal error", 500
-
 
 # ========== EXECUTA O FLASK ==========
 if __name__ == "__main__":

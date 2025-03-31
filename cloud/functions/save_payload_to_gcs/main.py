@@ -1,6 +1,6 @@
 import base64
 import json
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from google.cloud import storage
 from flask import Flask, request
 
@@ -20,10 +20,12 @@ def handle_lorawan_message(event, context):
         print(f"Erro ao decodificar payload: {e}")
         return "Invalid JSON", 400
 
-    payload["timestamp"] = datetime.utcnow().isoformat() + "Z"
+    # Define horário em UTC-3 (Horário de Brasília)
+    br_time = datetime.now(timezone.utc) + timedelta(hours=-3)
+    payload["timestamp"] = br_time.isoformat()
 
     device_eui = payload.get("device_eui", "unknown_device")
-    timestamp_str = datetime.utcnow().strftime("%Y%m%dT%H%M%S")
+    timestamp_str = br_time.strftime("%Y%m%dT%H%M%S")
     filename = f"raw/{device_eui}_{timestamp_str}.json"
 
     try:
