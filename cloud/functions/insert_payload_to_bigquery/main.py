@@ -22,21 +22,20 @@ def handle_lorawan_message(event, context):
         client = bigquery.Client()
         table_id = "helium-iot-tcc.helium_data.sensor_readings"
         rows_to_insert = [{
-            "device_eui": payload.get("device_eui", "unknown"),
-            "timestamp": payload["timestamp"],
-            "temperature": float(payload.get("temperature", 0)),
-            "humidity": float(payload.get("humidity", 0))
+            "device_eui": payload.get("device_eui"),
+            "temperature": payload.get("temperature"),
+            "humidity": payload.get("humidity"),
+            "timestamp": payload.get("timestamp")
         }]
         errors = client.insert_rows_json(table_id, rows_to_insert)
         if errors:
             print(f"Erros ao inserir no BigQuery: {errors}")
-            return "BigQuery insert error", 500
-        else:
-            print("Dados inseridos no BigQuery com sucesso.")
-            return "Success", 200
+            return "BigQuery Error", 500
+        print(f"Payload inserido no BigQuery: {rows_to_insert}")
+        return "Success", 200
     except Exception as e:
-        print(f"Erro geral: {e}")
-        return "Internal error", 500
+        print(f"Erro ao acessar o BigQuery: {e}")
+        return "BigQuery Error", 500
 
 # ========== FLASK APP ==========
 app = Flask(__name__)
@@ -45,7 +44,7 @@ app = Flask(__name__)
 def handle_request():
     try:
         body = request.get_json(silent=True)
-        event = {"data": body.get("message", {}).get("data", "")}
+        event = body.get("message", {})  # <=== AJUSTE AQUI
         return handle_lorawan_message(event, None)
     except Exception as e:
         print(f"Erro inesperado: {e}")

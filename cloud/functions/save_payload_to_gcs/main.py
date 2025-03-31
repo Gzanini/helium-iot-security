@@ -40,13 +40,12 @@ app = Flask(__name__)
 def handle_request():
     try:
         body = request.get_json(silent=True)
-        event = {"data": body.get("message", {}).get("data", "")}
+        event = body.get("message", {})  # <- AJUSTADO AQUI
         return handle_lorawan_message(event, None)
     except Exception as e:
         print(f"Erro inesperado: {e}")
         return "Internal error", 500
 
-# ========== EXECUTA O FLASK ==========
 if __name__ == "__main__":
     import os
     port = int(os.environ.get("PORT", 8080))
