@@ -3,7 +3,9 @@
 #include <SPI.h>
 #include "DHT.h"
 
-#define DHTPIN 22
+#define LED_PIN_G 22
+#define LED_PIN_Y 23
+#define DHTPIN 15
 #define DHTTYPE DHT11
 DHT dht(DHTPIN, DHTTYPE);
 
@@ -14,9 +16,9 @@ unsigned long lastSend = 0;
 unsigned long lastButtonPress = 0;
 
 // OTAA credentials
-static const u1_t PROGMEM APPEUI[8] = { 0xE2, 0xE4, 0x33, 0x38, 0xEC, 0x6C, 0x86, 0xB9 };
-static const u1_t PROGMEM DEVEUI[8] = { 0xB5, 0x0E, 0x32, 0x84, 0xDC, 0x46, 0x0F, 0x28 };
-static const u1_t PROGMEM APPKEY[16] = { 0xFD, 0xCC, 0x5A, 0x40, 0x8D, 0x08, 0x16, 0xC5, 0x00, 0x29, 0x55, 0xC9, 0x36, 0x57, 0x8F, 0x1F };
+static const u1_t PROGMEM APPEUI[8]  = { 0x00, 0x00, 0x00, 0xD0, 0x7E, 0xD5, 0xB3, 0x70 }; // padrão TagoIO
+static const u1_t PROGMEM DEVEUI[8]  = { 0xB5, 0x0E, 0x32, 0x84, 0xDC, 0x46, 0x0F, 0x28 }; // seu DevEUI
+static const u1_t PROGMEM APPKEY[16] = { 0x77, 0xCB, 0x69, 0xBA, 0xA1, 0x00, 0x49, 0x9F,0xB4, 0x50, 0x41, 0x7C, 0xBF, 0x29, 0x6C, 0xDF }; // seu AppKey
 
 void os_getArtEui(u1_t* buf) { memcpy_P(buf, APPEUI, 8); }
 void os_getDevEui(u1_t* buf) { memcpy_P(buf, DEVEUI, 8); }
@@ -35,12 +37,18 @@ void onEvent(ev_t ev) {
   switch (ev) {
     case EV_JOINING:
       Serial.println("🔄 Tentando conectar via OTAA...");
+      digitalWrite(LED_PIN_G, LOW);
+      digitalWrite(LED_PIN_Y, LOW);
       break;
     case EV_JOINED:
       Serial.println("✅ Dispositivo conectado à rede LoRaWAN!");
+      digitalWrite(LED_PIN_G, HIGH);
+      digitalWrite(LED_PIN_Y, LOW);
       break;
     case EV_TXCOMPLETE:
       Serial.println("📤 Dados enviados com sucesso!");
+      digitalWrite(LED_PIN_G, LOW);
+      digitalWrite(LED_PIN_Y, HIGH);
       break;
     default:
       break;
@@ -79,6 +87,11 @@ void setup() {
   Serial.begin(115200);
   delay(2000);
   Serial.println("Iniciando LMIC...");
+
+  pinMode(LED_PIN_G, OUTPUT);
+  pinMode(LED_PIN_Y, OUTPUT);
+  digitalWrite(LED_PIN_G, LOW);
+  digitalWrite(LED_PIN_Y, LOW);
   
   dht.begin();
   pinMode(BUTTON_PIN, INPUT_PULLUP);
