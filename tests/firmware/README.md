@@ -4,7 +4,6 @@ Esta pasta contém códigos de teste desenvolvidos com ESP32 para integração c
 
 Cada sketch está em uma pasta separada, conforme exigido pela Arduino IDE. Abaixo você encontra uma descrição rápida de cada exemplo e links para download.
 
----
 
 ## 📂 Testes disponíveis
 
@@ -16,8 +15,6 @@ Testa a conexão via OTAA com a rede Helium usando **ESP32 + módulo LoRa RFM95W
   - LED amarelo indica falha na conexão
 - No terminal serial (baud rate 115200), exibe os logs do processo de conexão com a rede LoRaWAN (eventos LMIC).
 - Ideal para validar a comunicação com a rede Helium.
-
----
 
 ### 🔹 [`LoRaWAN_OTAA_Example`](LoRaWAN_OTAA_Example/LoRaWAN_OTAA_Example.ino)
 Teste de envio LoRaWAN utilizando **ESP32 + módulo LoRaWAN da Radioenge (código RD49C)** com a biblioteca `LoRaWAN_Radioenge`.
