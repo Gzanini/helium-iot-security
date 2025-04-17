@@ -10,6 +10,7 @@ void setup() {
   LoRa.begin(true);    // Inicializa o módulo e busca parâmetros
 
   LoRa.printParameters(); // Exibe DevEUI, AppEUI, AppKey, etc.
+  
 }
 
 void loop() {

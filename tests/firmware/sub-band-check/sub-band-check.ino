@@ -6,7 +6,7 @@
 LoRaWAN_Radioenge LoRa(&Serial2);
 
 // Lista das sub-bandas (US915), cada uma com 8 canais uplink
-const char* chmask_list[8] = {
+const char* chmask_list[9] = {
   "FF00:0000:0000:0000:0001:0000",  // Sub-band 1
   "00FF:0000:0000:0000:0002:0000",  // Sub-band 2 (Melhor conectividade nos testes)
   "0000:FF00:0000:0000:0004:0000",  // Sub-band 3
@@ -14,7 +14,8 @@ const char* chmask_list[8] = {
   "0000:0000:FF00:0000:0010:0000",  // Sub-band 5
   "0000:0000:00FF:0000:0020:0000",  // Sub-band 6
   "0000:0000:0000:FF00:0040:0000",  // Sub-band 7
-  "0000:0000:0000:00FF:0080:0000"   // Sub-band 8
+  "0000:0000:0000:00FF:0080:0000",  // Sub-band 8
+  "FFFF:0000:0000:0000:0000:0000"   // 64 canais de uplink
 };
 
 void setup() {
@@ -35,7 +36,7 @@ void setup() {
 
   Serial.println("\n🚀 Iniciando teste automático de sub-bandas...\n");
 
-  for (int i = 0; i < 8; i++) {
+  for (int i = 0; i < 9; i++) {
     Serial.print("🛰️  Testando Sub-banda ");
     Serial.print(i);
     Serial.print(" → AT+CHMASK=");
