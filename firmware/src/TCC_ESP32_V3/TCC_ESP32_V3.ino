@@ -3,8 +3,8 @@
 #include "DHT.h"
 
 #define BOOT_LED_PIN 2
-#define LED_PIN_ERR 4
-#define DHT_PIN 15
+#define LED_PIN_ERR 25
+#define DHT_PIN 13
 #define DHT_TYPE DHT11
 #define BOOT_BTN 0
 
@@ -14,9 +14,11 @@ DHT dht(DHT_PIN, DHT_TYPE);
 unsigned long lastSend = 0;
 const unsigned long interval = 3600000; // 1 hora em milissegundos
 
+String connectionType = "CS"; // Network Server (TTN [The Things Network] / CS [ChirpStack])
+
 void setup() {
   Serial.begin(9600);
-  Serial2.begin(9600, SERIAL_8N1, 16, 17);
+  Serial2.begin(9600, SERIAL_8N1, 26, 27);
 
   pinMode(BOOT_LED_PIN, OUTPUT);
   pinMode(LED_PIN_ERR, OUTPUT);
@@ -35,7 +37,7 @@ void setup() {
   bool joined = false;
 
   while (!joined) {
-    LoRa.ATZ();            // Reinicia o módulo
+    LoRa.ATZ();
     delay(1000);
 
     joined = LoRa.JoinNetwork(OTAA, CS, true, false);
@@ -47,11 +49,11 @@ void setup() {
     } else {
       Serial.println("[X] Falha no Join. Tentando novamente em 1 minuto...");
       digitalWrite(LED_PIN_ERR, HIGH);
-      delay(60000);  // Espera 1 minuto antes de tentar novamente
+      delay(60000);
     }
   }
   Serial.println("---------------------------------------------------");
-  
+
   delay(5000);
 }
 
@@ -65,15 +67,14 @@ void sendSensorData() {
     return;
   }
 
-  char payload[32];
-  snprintf(payload, sizeof(payload), "T=%.1f H=%.1f", temp, hum);
+  char payload[48];
+  snprintf(payload, sizeof(payload), "T=%.1f H=%.1f C=%s", temp, hum, connectionType.c_str());
 
   Serial.print("[TX] Payload: ");
   Serial.println(payload);
 
-  // Envia e armazena resposta AT
   LoRa.SendString(payload, 1);
-  delay(500); // Aguarda resposta
+  delay(500);
 
   while (Serial2.available()) {
     String response = Serial2.readStringUntil('\n');
@@ -94,19 +95,18 @@ void sendSensorData() {
   Serial.println("---------------------------------------------------");
 }
 
+
 void loop() {
-  // Envio a cada 1 hora
   if (millis() - lastSend >= interval) {
     Serial.println("[TIMER] Tempo atingido. Enviando dados...");
     sendSensorData();
-    delay(1000); // Debounce
+    delay(1000);
     lastSend = millis();
   }
 
-  // Envio manual com botão BOOT (LOW = pressionado)
   if (digitalRead(BOOT_BTN) == LOW) {
     Serial.println("[BTN] Botão pressionado. Enviando dados...");
     sendSensorData();
-    delay(1000); // Debounce
+    delay(1000);
   }
 }
