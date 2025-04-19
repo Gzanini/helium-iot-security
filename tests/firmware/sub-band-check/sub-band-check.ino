@@ -1,7 +1,7 @@
 #include "LoRaWAN_Radioenge.h"
 
 #define LED_PIN_G 2 //esquerda
-#define LED_PIN_R 4 // direita (lado da antena)
+#define LED_PIN_R 25 // direita (lado da antena)
 
 LoRaWAN_Radioenge LoRa(&Serial2);
 
@@ -25,13 +25,13 @@ void setup() {
   digitalWrite(LED_PIN_R, LOW);
 
   Serial.begin(9600);                            // Comunicação com PC
-  Serial2.begin(9600, SERIAL_8N1, 16, 17);       // Comunicação com o módulo (TX=17, RX=16)
+  Serial2.begin(9600, SERIAL_8N1, 26, 27);       // Comunicação com o módulo (TX=26, RX=27)
 
   LoRa.begin(true);  // Inicializa o módulo
 
   // Parâmetros do dispositivo (ajuste com os seus valores do Helium Console)
-  LoRa.APPEUI("9C6F4E7E25D9AFBB");
-  LoRa.APPKEY("EEBA57047087E0B566AC8768E9F6672A");
+  LoRa.APPEUI("b6bf8cd2dcfb7654");
+  LoRa.APPKEY("550e55107f2b3491c25fc2b95ff29dfa");
   delay(500);
 
   Serial.println("\n🚀 Iniciando teste automático de sub-bandas...\n");
@@ -48,7 +48,7 @@ void setup() {
     delay(1000); // Tempo para o módulo aplicar
 
     // Tenta o join
-    bool joined = LoRa.JoinNetwork(OTAA, TTN, true, false);
+    bool joined = LoRa.JoinNetwork(OTAA, CS, true, false);
 
     if (joined) {
       Serial.print("✅ Sub-banda ");

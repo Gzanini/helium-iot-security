@@ -12,12 +12,12 @@ void setup() {
   digitalWrite(LED_PIN_R, LOW);
 
   Serial.begin(9600);
-  Serial2.begin(9600, SERIAL_8N1, 16, 17);
+  Serial2.begin(9600, SERIAL_8N1, 26, 27);
 
   LoRa.begin(true);    // Inicializa o módulo e busca parâmetros
   LoRa.printParameters();
 
-  bool joined = LoRa.JoinNetwork(OTAA, CS, false, false);
+  bool joined = LoRa.JoinNetwork(OTAA, CS, true, false);
   delay(10000);
 
   if (joined) {
