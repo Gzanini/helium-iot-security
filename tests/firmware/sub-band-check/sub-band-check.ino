@@ -5,6 +5,12 @@
 
 LoRaWAN_Radioenge LoRa(&Serial2);
 
+String connectionType = "CS"; // Network Server (TTN [The Things Network] / CS [ChirpStack])
+
+const char* app_eui;
+const char* app_key;
+uint8_t net = 0xFF;
+
 // Lista das sub-bandas (US915), cada uma com 8 canais uplink
 const char* chmask_list[9] = {
   "FF00:0000:0000:0000:0001:0000",  // Sub-band 1
@@ -27,11 +33,8 @@ void setup() {
   Serial.begin(9600);                            // Comunicação com PC
   Serial2.begin(9600, SERIAL_8N1, 26, 27);       // Comunicação com o módulo (TX=26, RX=27)
 
-  LoRa.begin(true);  // Inicializa o módulo
-
-  // Parâmetros do dispositivo (ajuste com os seus valores do Helium Console)
-  LoRa.APPEUI("b6bf8cd2dcfb7654");
-  LoRa.APPKEY("550e55107f2b3491c25fc2b95ff29dfa");
+  configurarCredenciais();
+  LoRa.begin(true);
   delay(500);
 
   Serial.println("\n🚀 Iniciando teste automático de sub-bandas...\n");
@@ -43,12 +46,11 @@ void setup() {
     Serial.println(chmask_list[i]);
 
     // Envia comando AT diretamente via Serial2
-    Serial2.print("AT+CHMASK=");
-    Serial2.println(chmask_list[i]);
+    LoRa.CHMASK(chmask_list[i]);
     delay(1000); // Tempo para o módulo aplicar
 
     // Tenta o join
-    bool joined = LoRa.JoinNetwork(OTAA, CS, true, false);
+    bool joined = LoRa.JoinNetwork(OTAA, net, true, false);
 
     if (joined) {
       Serial.print("✅ Sub-banda ");
@@ -70,6 +72,22 @@ void setup() {
   digitalWrite(LED_PIN_R, HIGH);
   digitalWrite(LED_PIN_G, LOW);
 }
+
+void configurarCredenciais() {
+  if (connectionType == "CS") {
+    LoRa.APPEUI("b6bf8cd2dcfb7654");
+    LoRa.APPKEY("550e55107f2b3491c25fc2b95ff29dfa");
+    net = 0x00;
+  } else if (connectionType == "TTN") {
+    LoRa.APPEUI("a2338dcd2eb09db6");
+    LoRa.APPKEY("8DE317D23261962D47E419369FA2B2D3");
+    net = 0x01;
+  } else {
+    Serial.println("Tipo de conexão inválido.");
+    while (true);
+  }
+}
+
 
 void loop() {
   // Nada aqui

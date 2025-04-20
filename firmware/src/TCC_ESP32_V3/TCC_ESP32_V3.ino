@@ -16,6 +16,10 @@ const unsigned long interval = 3600000; // 1 hora em milissegundos
 
 String connectionType = "CS"; // Network Server (TTN [The Things Network] / CS [ChirpStack])
 
+const char* app_eui;
+const char* app_key;
+uint8_t net = 0xFF;
+
 void setup() {
   Serial.begin(9600);
   Serial2.begin(9600, SERIAL_8N1, 26, 27);
@@ -30,17 +34,16 @@ void setup() {
   dht.begin();
 
   LoRa.begin(true);
-  LoRa.APPEUI("b6bf8cd2dcfb7654");
-  LoRa.APPKEY("550e55107f2b3491c25fc2b95ff29dfa");
+  configurarCredenciais();
 
-  Serial.println("[JOIN] Tentando se conectar à rede Helium...");
+  Serial.println("[JOIN] Tentando se conectar à rede " + connectionType + "...");
   bool joined = false;
 
   while (!joined) {
     LoRa.ATZ();
     delay(1000);
 
-    joined = LoRa.JoinNetwork(OTAA, CS, true, false);
+    joined = LoRa.JoinNetwork(OTAA, net, true, false);
 
     if (joined) {
       Serial.println("[✓] Join realizado com sucesso!");
@@ -93,6 +96,21 @@ void sendSensorData() {
   }
 
   Serial.println("---------------------------------------------------");
+}
+
+void configurarCredenciais() {
+  if (connectionType == "CS") {
+    LoRa.APPEUI("b6bf8cd2dcfb7654");
+    LoRa.APPKEY("550e55107f2b3491c25fc2b95ff29dfa");
+    net = 0x00;
+  } else if (connectionType == "TTN") {
+    LoRa.APPEUI("a2338dcd2eb09db6");
+    LoRa.APPKEY("8DE317D23261962D47E419369FA2B2D3");
+    net = 0x01;
+  } else {
+    Serial.println("Tipo de conexão inválido.");
+    while (true);
+  }
 }
 
 
