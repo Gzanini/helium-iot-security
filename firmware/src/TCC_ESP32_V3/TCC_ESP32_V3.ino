@@ -35,7 +35,12 @@ void setup() {
 
   LoRa.begin(true);
   configurarCredenciais();
+  JoinNetwork();
 
+  delay(5000);
+}
+
+void JoinNetwork(){
   Serial.println("[JOIN] Tentando se conectar à rede " + connectionType + "...");
   bool joined = false;
 
@@ -49,15 +54,16 @@ void setup() {
       Serial.println("[✓] Join realizado com sucesso!");
       digitalWrite(BOOT_LED_PIN, HIGH);
       digitalWrite(LED_PIN_ERR, LOW);
+      Serial.println("---------------------------------------------------");
+      Serial.println("[JOIN] Primeiro envio após conexão. Enviando dados...");
+      delay(2000);
+      sendSensorData();
     } else {
       Serial.println("[X] Falha no Join. Tentando novamente em 1 minuto...");
       digitalWrite(LED_PIN_ERR, HIGH);
       delay(60000);
     }
   }
-  Serial.println("---------------------------------------------------");
-
-  delay(5000);
 }
 
 void sendSensorData() {
@@ -67,7 +73,7 @@ void sendSensorData() {
   if (isnan(temp) || isnan(hum)) {
     Serial.println("[X] Falha ao ler do sensor DHT11.");
     digitalWrite(LED_PIN_ERR, HIGH);
-    return;
+    while (true);
   }
 
   char payload[48];
@@ -89,9 +95,13 @@ void sendSensorData() {
       delay(2000);
       esp_restart();
     }
-
-    if (response.indexOf("AT_TX_OK") >= 0) {
+    else if (response.indexOf("AT_TX_OK") >= 0) {
       Serial.println("[✓] Dados enviados com sucesso!");
+    }
+    else {
+      Serial.println("[X] Falha ao enviar dados. Reiniciando ESP32 para tentar novamente...");
+      delay(2000);
+      esp_restart();
     }
   }
 
