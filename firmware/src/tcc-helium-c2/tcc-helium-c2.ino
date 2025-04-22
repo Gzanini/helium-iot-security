@@ -3,21 +3,18 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 
-INA3221 ina3221(0x40);  // Endereço padrão
+INA3221 ina3221(0x40);
 
 #define SDA_PIN 19
 #define SCL_PIN 21
 
-#define LED_OK 4     // LED verde
-#define LED_ERR 22   // LED vermelho
+#define LED_OK 4
+#define LED_ERR 22
 
-const char* ssid = "Sebratel492";
-const char* password = "f0f1nha2020";
+const char* ssid = "Sebratel492"; //zanini_301
+const char* password = "f0f1nha2020"; //72232fdb16
 const char* tago_token = "bf671878-6b0e-44f9-9fc3-395f23a5fe33";
-String connectionType = "CS"; //// Network Server (TTN [The Things Network] / CS [ChirpStack])
-
-unsigned long lastSend = 0;
-const unsigned long interval = 60000; // 1 minuto
+String connectionType = "CS"; // ChirpStack
 
 void setup() {
   Serial.begin(115200);
@@ -29,28 +26,11 @@ void setup() {
   digitalWrite(LED_ERR, LOW);
 
   delay(1000);
-  Serial.println("\n📡 Escaneando redes...");
-  int n = WiFi.scanNetworks();
-  bool redeEncontrada = false;
-
-  for (int i = 0; i < n; ++i) {
-    Serial.printf("📶 %s | RSSI: %d dBm\n", WiFi.SSID(i).c_str(), WiFi.RSSI(i));
-    if (WiFi.SSID(i) == ssid) {
-      redeEncontrada = true;
-    }
-  }
-
-  if (!redeEncontrada) {
-    Serial.println("❌ Rede desejada não encontrada!");
-    digitalWrite(LED_ERR, HIGH);
-    return;
-  }
-
-  Serial.println("Tentando conectar ao Wi-Fi...");
+  Serial.println("Conectando ao Wi-Fi...");
   WiFi.begin(ssid, password);
 
   unsigned long startTime = millis();
-  const unsigned long timeout = 15000;  // 15 segundos para tentar conectar
+  const unsigned long timeout = 15000;
 
   while (WiFi.status() != WL_CONNECTED && millis() - startTime < timeout) {
     delay(500);
@@ -73,56 +53,59 @@ void setup() {
     while (1);
   }
 
-  ina3221.enableChannel(0);
-  ina3221.setShuntR(0, 0.1);
-  ina3221.setWarningCurrent(0, 3000);
-  ina3221.setCriticalCurrent(0, 3200);
+  for (int ch = 0; ch < 3; ch++) {
+    ina3221.enableChannel(ch);
+    ina3221.setShuntR(ch, 0.1);
+    ina3221.setWarningCurrent(ch, 3000);
+    ina3221.setCriticalCurrent(ch, 3200);
+  }
+
   ina3221.setModeShuntBusContinuous();
   ina3221.setMaskEnable(0x0000);
 
   Serial.println("Configuração finalizada.");
 }
 
-void sendToTago(float voltage, float current) {
+void sendToTago(float v1, float i1, float v2, float i2) {
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
     http.begin("https://api.tago.io/data");
-
     http.addHeader("Content-Type", "application/json");
     http.addHeader("Device-Token", tago_token);
 
     String payload = "[";
-    payload += "{\"variable\":\"voltage\",\"value\":" + String(voltage, 3) + ",\"metadata\":{\"connection\":\"" + connectionType + "\"}},";
-    payload += "{\"variable\":\"current\",\"value\":" + String(current, 3) + ",\"metadata\":{\"connection\":\"" + connectionType + "\"}}";
+    payload += "{\"variable\":\"total_voltage\",\"value\":" + String(v1, 3) + ",\"unit\":\"V\",\"metadata\":{\"connection\":\"" + connectionType + "\"}},";
+    payload += "{\"variable\":\"total_current\",\"value\":" + String(i1, 3) + ",\"unit\":\"mA\",\"metadata\":{\"connection\":\"" + connectionType + "\"}},";
+    payload += "{\"variable\":\"radioenge_voltage\",\"value\":" + String(v2, 3) + ",\"unit\":\"V\",\"metadata\":{\"connection\":\"" + connectionType + "\"}},";
+    payload += "{\"variable\":\"radioenge_current\",\"value\":" + String(i2, 3) + ",\"unit\":\"mA\",\"metadata\":{\"connection\":\"" + connectionType + "\"}}";
     payload += "]";
 
     int httpResponseCode = http.POST(payload);
     if (httpResponseCode > 0) {
-      Serial.println("Dados enviados ao TagoIO com sucesso!");
+      Serial.println("✅ Dados enviados ao TagoIO!");
       digitalWrite(LED_ERR, LOW);
     } else {
       Serial.print("❌ Erro ao enviar: ");
       Serial.println(httpResponseCode);
       digitalWrite(LED_ERR, HIGH);
     }
-
     http.end();
   } else {
-    Serial.println("Wi-Fi desconectado.");
+    Serial.println("❌ Wi-Fi desconectado.");
     digitalWrite(LED_ERR, HIGH);
   }
 }
 
 void loop() {
-  float voltage = ina3221.getBusVoltage_mV(0) / 1000.0;
-  float current = ina3221.getCurrent_mA(0);
+  float totalVoltage = ina3221.getBusVoltage_mV(0) / 1000.0;
+  float totalCurrent = ina3221.getCurrent_mA(0);
+  float radioengeVoltage = ina3221.getBusVoltage_mV(1) / 1000.0;
+  float radioengeCurrent = ina3221.getCurrent_mA(1);
 
-  Serial.print("Tensão (V): ");
-  Serial.print(voltage, 3);
-  Serial.print(" | Corrente (mA): ");
-  Serial.println(current, 3);
+  Serial.println("🔍 Leituras:");
+  Serial.printf("Total - V: %.2f | I: %.3f A\n", totalVoltage, totalCurrent);
+  Serial.printf("Radioenge - V: %.2f | I: %.3f A\n", radioengeVoltage, radioengeCurrent);
 
-  sendToTago(voltage, current);
-
-  delay(2800);
+  sendToTago(totalVoltage, totalCurrent, radioengeVoltage, radioengeCurrent);
+  delay(1000);  // 1 s
 }
