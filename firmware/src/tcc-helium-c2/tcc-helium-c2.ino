@@ -1,5 +1,6 @@
 #include <Wire.h>
 #include "INA3221.h"
+#include "esp_system.h"
 #include <WiFi.h>
 #include <HTTPClient.h>
 
@@ -43,7 +44,8 @@ void setup() {
   } else {
     Serial.println("\n❌ Falha na conexão Wi-Fi.");
     digitalWrite(LED_ERR, HIGH);
-    return;
+    delay(2000);
+    esp_restart();
   }
 
   Serial.println("Inicializando INA3221...");
@@ -93,6 +95,8 @@ void sendToTago(float v1, float i1, float v2, float i2) {
   } else {
     Serial.println("❌ Wi-Fi desconectado.");
     digitalWrite(LED_ERR, HIGH);
+    delay(2000);
+    esp_restart();
   }
 }
 
