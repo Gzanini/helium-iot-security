@@ -13,7 +13,7 @@ INA3221 ina3221(0x40);
 
 const char* ssid = "Sebratel492"; //zanini_301
 const char* password = "f0f1nha2020"; //72232fdb16
-const char* tago_token = "bf671878-6b0e-44f9-9fc3-395f23a5fe33";
+const char* tago_token = "71453302-c687-4a0b-93cb-7d7dc1a319ed";
 String connectionType = "CS"; // ChirpStack
 
 void setup() {
