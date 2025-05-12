@@ -1,0 +1,69 @@
+const { Analysis, Device } = require("@tago-io/sdk");
+
+async function myAnalysis(context, scope) {
+  const device = new Device({ token: "7ca06cb3-c03c-449e-8f3e-1eae4869df83" });
+
+  const now = new Date();
+  const localNow = new Date(now.getTime() - 3 * 60 * 60 * 1000);
+  const date_key = localNow.toISOString().split("T")[0];
+  const serie_key = `daily-${date_key}`;
+
+  const dia_inicio = new Date(`${date_key}T00:00:00-03:00`).toISOString();
+  const dia_fim = new Date(`${date_key}T23:59:59-03:00`).toISOString();
+
+  // Buscar todos os registros de "temperature" do dia atual em UTC-3
+  const all_data = await device.getData({
+    variable: "temperature",
+    start_date: dia_inicio,
+    end_date: dia_fim,
+    qty: 9999,
+  });
+
+  // Corrigir o horário para UTC-3 e filtrar somente os que realmente pertencem ao dia atual
+  const registros_hoje = all_data.filter(item => {
+    const localTime = new Date(new Date(item.time).getTime() - 3 * 60 * 60 * 1000);
+    return localTime.toISOString().split("T")[0] === date_key;
+  });
+
+  const total_today = registros_hoje.length;
+
+  // Deletar registros antigos da mesma série
+  const variaveis = ["total_messages_today", "status"];
+  for (const variable of variaveis) {
+    const antigos = await device.getData({
+      variable,
+      serie: serie_key,
+      qty: 999,
+    });
+    for (const r of antigos) {
+      await device.deleteData({ id: r.id });
+    }
+  }
+
+  // Enviar total_messages_today atualizado
+  await device.sendData({
+    variable: "total_messages_today",
+    value: total_today,
+    serie: serie_key,
+  });
+
+  if (total_today > 0) {
+    const last_time = new Date(registros_hoje[0].time).getTime();
+    const now_time = new Date().getTime();
+    const diff_minutes = (now_time - last_time) / (1000 * 60);
+
+    const status = diff_minutes <= 60 ? "Ativo" : "Inativo";
+
+    await device.sendData({
+      variable: "status",
+      value: status,
+      serie: serie_key,
+    });
+
+    console.log(`[Status] ${date_key} → ${total_today} mensagens, última leitura há ${diff_minutes.toFixed(1)}min → ${status}`);
+  } else {
+    console.log("⚠️ Nenhum dado de temperatura encontrado hoje.");
+  }
+}
+
+module.exports = new Analysis(myAnalysis);

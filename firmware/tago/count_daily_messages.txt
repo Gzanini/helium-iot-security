@@ -1,0 +1,55 @@
+const { Analysis, Device } = require("@tago-io/sdk");
+
+async function myAnalysis(context, scope) {
+  const device = new Device({ token: "7ca06cb3-c03c-449e-8f3e-1eae4869df83" });
+
+  // 1. Buscar todos os registros de temperature (ajustar se quiser histórico limitado)
+  const all_data = await device.getData({
+    variable: "temperature",
+    qty: 9999,
+  });
+
+  if (!all_data.length) {
+    return context.log("⚠️ Nenhum dado encontrado.");
+  }
+
+  // 2. Agrupar os dados por dia (ajustado para UTC-3)
+  const grouped = {};
+
+  for (const item of all_data) {
+    const adjustedTime = new Date(new Date(item.time).getTime() - 3 * 60 * 60 * 1000); // UTC-3
+    const date_key = adjustedTime.toISOString().split("T")[0];
+
+    if (!grouped[date_key]) grouped[date_key] = [];
+    grouped[date_key].push(item);
+  }
+
+  // 3. Processar cada dia e enviar total_messages_today com a série correspondente
+  for (const date_key of Object.keys(grouped)) {
+    const records = grouped[date_key];
+    const serie_key = `daily-${date_key}`;
+    const total = records.length;
+
+    // Deletar registros anteriores da mesma série
+    const antigos = await device.getData({
+      variable: "total_messages_today",
+      serie: serie_key,
+      qty: 999,
+    });
+
+    for (const r of antigos) {
+      await device.deleteData({ id: r.id });
+    }
+
+    // Enviar novo valor
+    await device.sendData({
+      variable: "total_messages_today",
+      value: total,
+      serie: serie_key,
+    });
+
+    context.log(`📅 ${date_key}: ${total} registros enviados (serie: ${serie_key})`);
+  }
+}
+
+module.exports = new Analysis(myAnalysis);

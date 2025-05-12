@@ -1,0 +1,101 @@
+const { Analysis, Device } = require("@tago-io/sdk");
+
+async function myAnalysis(context, scope) {
+  const device = new Device({ token: "71453302-c687-4a0b-93cb-7d7dc1a319ed" });
+
+  // ================== PARTE 1 - Consumo por Hora (Wh) ==================
+  const current_data = await device.getData({
+    variable: "total_current",
+    qty: 9999,
+  });
+
+  let consumo_payload = [];
+
+  if (current_data.length) {
+    const grouped = {};
+    for (const d of current_data) {
+      const time = new Date(d.time);
+      const hour_key = new Date(time);
+      hour_key.setMinutes(0, 0, 0);
+      const hour_str = hour_key.toISOString();
+
+      if (!grouped[hour_str]) grouped[hour_str] = [];
+      grouped[hour_str].push(d.value);
+    }
+
+    const voltage = 4.92;
+    for (const [hour, values] of Object.entries(grouped)) {
+      const media_corrente = values.reduce((a, b) => a + b, 0) / values.length;
+      const consumo = (media_corrente / 1000) * voltage;
+
+      consumo_payload.push({
+        variable: "consumo_Wh",
+        value: parseFloat(consumo.toFixed(4)),
+        time: hour,
+        unit: "Wh",
+      });
+    }
+
+    if (consumo_payload.length) {
+      await device.sendData(consumo_payload);
+      context.log(`✅ ${consumo_payload.length} registros de consumo_Wh enviados.`);
+    } else {
+      context.log("⚠️ Nenhum dado válido para envio de consumo.");
+    }
+  } else {
+    context.log("⚠️ Nenhum dado de corrente encontrado.");
+  }
+
+  // ================== PARTE 2 - Tensão Média ==================
+  const radioenge_voltage = await device.getData({
+    variable: "radioenge_voltage",
+    qty: 9999,
+  });
+
+  const total_voltage = await device.getData({
+    variable: "total_voltage",
+    qty: 9999,
+  });
+
+  if (radioenge_voltage.length && total_voltage.length) {
+    const calcMedia = (dados) => dados.reduce((a, b) => a + b.value, 0) / dados.length;
+
+    const media_radioenge_v = calcMedia(radioenge_voltage);
+    const media_total_v = calcMedia(total_voltage);
+
+    await device.sendData([
+      {
+        variable: "avg_radioenge_voltage",
+        value: parseFloat(media_radioenge_v.toFixed(2)),
+        unit: "V",
+      },
+      {
+        variable: "avg_total_voltage",
+        value: parseFloat(media_total_v.toFixed(2)),
+        unit: "V",
+      }
+    ]);
+
+    context.log("✅ Tensão média enviada com sucesso:");
+    context.log(`- Radioenge: ${media_radioenge_v.toFixed(2)} V`);
+    context.log(`- Total: ${media_total_v.toFixed(2)} V`);
+  } else {
+    context.log("⚠️ Dados insuficientes para cálculo de tensão média.");
+  }
+
+  // ================== PARTE 3 - Consumo médio diário ==================
+  if (consumo_payload.length) {
+    const total_consumo = consumo_payload.reduce((acc, d) => acc + d.value, 0);
+    const media_consumo = total_consumo / consumo_payload.length;
+
+    await device.sendData({
+      variable: "avg_consumo_Wh",
+      value: parseFloat(media_consumo.toFixed(4)),
+      unit: "Wh",
+    });
+
+    context.log(`✅ Média de consumo horário (avg_consumo_Wh): ${media_consumo.toFixed(4)} Wh`);
+  }
+}
+
+module.exports = new Analysis(myAnalysis);
