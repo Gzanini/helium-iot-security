@@ -1,0 +1,61 @@
+const { Analysis, Device } = require("@tago-io/sdk");
+
+async function myAnalysis(context, scope) {
+  const device_envios = new Device({ token: "7ca06cb3-c03c-449e-8f3e-1eae4869df83" });
+  const device_consumo = new Device({ token: "71453302-c687-4a0b-93cb-7d7dc1a319ed" });
+
+  const consumo_medio_por_hora = 0.3528;
+
+  const dados_envio = await device_envios.getData({
+    variables: ["temperature", "humidity"],
+    qty: 9999,
+  });
+
+  const atividade_por_dia = {};
+
+  for (const item of dados_envio) {
+    const rawDate = new Date(item.time);
+    const localDate = new Date(rawDate.getTime() - 3 * 60 * 60 * 1000); // Ajuste UTC-3
+    const dia = localDate.toISOString().split("T")[0];
+    const hora = localDate.getHours();
+
+    if (!atividade_por_dia[dia]) atividade_por_dia[dia] = new Set();
+    atividade_por_dia[dia].add(hora);
+  }
+
+  const payload = [];
+
+  for (const [dia, horas_set] of Object.entries(atividade_por_dia)) {
+    const horas_ativas = horas_set.size;
+    const consumo_estimado = horas_ativas * consumo_medio_por_hora;
+
+    payload.push(
+      {
+        variable: "horas_ativas_dia",
+        value: horas_ativas,
+        time: `${dia}T00:00:00.000Z`,
+        unit: "h",
+      },
+      {
+        variable: "consumo_dia_Wh",
+        value: parseFloat(consumo_estimado.toFixed(4)),
+        time: `${dia}T00:00:00.000Z`,
+        unit: "Wh",
+      }
+    );
+
+    // Log visual para debug:
+    const horas_ordenadas = Array.from(horas_set).sort((a, b) => a - b);
+    const horas_formatadas = horas_ordenadas.map(h => String(h).padStart(2, "0") + ":00").join(", ");
+    console.log(`📅 ${dia}: ${horas_ativas} horas ativas → [${horas_formatadas}]`);
+  }
+
+  if (payload.length) {
+    await device_consumo.sendData(payload);
+    console.log(`✅ ${payload.length} registros enviados para consumo e horas ativas.`);
+  } else {
+    console.log("⚠️ Nenhum dado válido encontrado.");
+  }
+}
+
+module.exports = new Analysis(myAnalysis);

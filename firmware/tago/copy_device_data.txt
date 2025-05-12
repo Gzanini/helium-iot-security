@@ -1,0 +1,41 @@
+const { Analysis, Device } = require("@tago-io/sdk");
+
+async function myAnalysis(context, scope) {
+  //tcc-helium-c1
+  //const immutable = new Device({ token: "ba8841eb-5fbb-4862-9a12-052d663d3849" });
+  //const mutable = new Device({ token: "7ca06cb3-c03c-449e-8f3e-1eae4869df83" });
+  //const variables = ["temperature", "humidity"];
+
+  //tcc-helium-c2
+  const immutable = new Device({ token: "bf671878-6b0e-44f9-9fc3-395f23a5fe33" });
+  const mutable = new Device({ token: "71453302-c687-4a0b-93cb-7d7dc1a319ed" });
+  const variables = ["radioenge_current", "radioenge_voltage", "total_voltage", "total_current"];
+
+  for (const variable of variables) {
+    context.log(`📦 Copiando: ${variable}`);
+
+    const results = await immutable.getData({
+      variable,
+      qty: 9999, // ou filtra por data se quiser limitar
+    });
+
+    const formatted = results.map((item) => ({
+      variable: item.variable,
+      value: item.value,
+      time: item.time,
+      unit: item.unit,
+      serie: item.serie,
+      location: item.location,
+      metadata: item.metadata,
+    }));
+
+    if (formatted.length > 0) {
+      await mutable.sendData(formatted);
+      context.log(`✅ ${formatted.length} registros copiados para "${variable}"`);
+    } else {
+      context.log(`⚠️ Nenhum dado encontrado para "${variable}"`);
+    }
+  }
+}
+
+module.exports = new Analysis(myAnalysis);

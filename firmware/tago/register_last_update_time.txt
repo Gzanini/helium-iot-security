@@ -1,0 +1,38 @@
+const { Analysis, Device } = require("@tago-io/sdk");
+
+async function myAnalysis(context, scope) {
+  const device = new Device({ token: "7ca06cb3-c03c-449e-8f3e-1eae4869df83" });
+
+  // Pegar o último dado da variável "temperature"
+  const data = await device.getData({
+    variable: "temperature",
+    qty: 1,
+  });
+
+  if (!data.length) {
+    context.log("⚠️ Nenhum dado de temperatura encontrado.");
+    return;
+  }
+
+  // Formatar hora (UTC-3 / São Paulo)
+  const last_time = new Date(data[0].time);
+  const formatted = last_time.toLocaleString("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    hour12: false,
+  });
+
+  // Chave para sobrescrever por dia
+  const date_key = new Date().toISOString().split("T")[0]; // "2025-04-22"
+  const serie_key = `daily-${date_key}`;
+
+  // Enviar variável com o horário formatado
+  await device.sendData({
+    variable: "last_success",
+    value: `${formatted}`,
+    serie: serie_key,
+  });
+
+  context.log(`✅ Enviado: ${formatted} (serie: ${serie_key})`);
+}
+
+module.exports = new Analysis(myAnalysis);
