@@ -1,0 +1,36 @@
+function parsePayload(payload) {
+  if (!payload[0] || !payload[0].data) {
+    return payload;
+  }
+
+  const decoded = Buffer.from(payload[0].data, 'base64').toString('utf8');
+  const match = decoded.match(/T=(\d+(\.\d+)?)\s+H=(\d+(\.\d+)?)\s+C=(\w+)/);
+
+  if (match) {
+    const connection = match[5];
+
+    return [
+      {
+        variable: 'temperature',
+        value: parseFloat(match[1]),
+        unit: '°C',
+        metadata: { connection }
+      },
+      {
+        variable: 'humidity',
+        value: parseFloat(match[3]),
+        unit: '%',
+        metadata: { connection }
+      }
+    ];
+  } else {
+    return [
+      {
+        variable: 'decode_error',
+        value: `Invalid format: ${decoded}`
+      }
+    ];
+  }
+}
+
+payload = parsePayload(payload);
