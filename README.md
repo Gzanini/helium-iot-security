@@ -1,83 +1,48 @@
-# Aumento da Segurança em Redes IoT Utilizando a Blockchain e o Protocolo LoRaWAN
+# Aumento da Segurança em Redes IoT utilizando Blockchain e o Protocolo LoRaWAN
 
-**Artigo do TCC:** *Aumento da Segurança em Redes IoT Utilizando a Blockchain e o Protocolo LoRaWAN: Estudo de Caso com a Rede Helium*  
-**Curso:** Engenharia da Computação – Universidade do Vale do Rio dos Sinos (Unisinos)
+Este repositório contém o projeto desenvolvido por Guilherme Zanini da Silva como parte do Trabalho de Conclusão de Curso (TCC) do curso de Engenharia da Computação na Unisinos. O trabalho propõe uma aplicação prática utilizando a **rede Helium** (Blockchain + LoRaWAN) para comunicação segura em redes IoT.
 
-Este repositório contém o código, documentação e experimentos desenvolvidos no **Trabalho de Conclusão de Curso (TCC)** que investiga o uso da tecnologia blockchain aliada ao protocolo LoRaWAN, por meio da **Rede Helium**, para aumentar a segurança em redes de Internet das Coisas (IoT).
+## 📌 Objetivo
 
----
+Investigar como a integração da **Blockchain Helium** com o protocolo **LoRaWAN** pode aumentar a segurança, a integridade e a confiabilidade na comunicação de dispositivos IoT, especialmente em ambientes sensíveis.
 
-## 🧠 Resumo
+## ⚙️ Estrutura do Projeto
 
-Este trabalho apresenta um estudo sobre a segurança em redes de Internet das Coisas (IoT), com foco na integração do protocolo LoRaWAN à tecnologia blockchain. Como parte prática do projeto, foi implementado um sensor de temperatura e umidade utilizando a rede Helium, que combina LoRaWAN com blockchain para registrar e validar transações de dados. A comunicação entre o dispositivo e a rede foi feita por meio do protocolo MQTT, e os dados foram processados em uma Cloud Function do Google Cloud Platform (GCP), sendo armazenados no BigQuery e em arquivos brutos no Cloud Storage. O objetivo foi avaliar o funcionamento da rede Helium e verificar o potencial de sua estrutura para garantir segurança, escalabilidade e confiabilidade em aplicações IoT.
+O projeto é dividido em duas etapas práticas, com circuitos independentes:
 
----
+### 🔹 Circuito 1 (C1) — Sensor Ambiental (Foco principal e desenvolvido no TCC)
+- Sensor DHT11 (temperatura/umidade)
+- Módulo LoRaWAN Radioenge RD49C
+- Envio de dados para a rede Helium
+- Integração com **TagoIO** e **Google Cloud** (Legado)
 
-## 🛠 Tecnologias Utilizadas
+### 🔹 Circuito 2 (C2) — Medidor de Consumo
+- Medição de corrente e tensão (Radioenge INA3221)
+- Cálculo de consumo energético
+- Scripts de análise foram criados com base no C2 para avaliar a atividade e o consumo do C1
 
-- **ESP32** – Microcontrolador para controle do sensor e envio via LoRa.
-- **Sensor DHT11** – Coleta de temperatura e umidade.
-- **Módulo LoRa RFM95W (915 MHz)** – Comunicação via protocolo LoRaWAN.
-- **Rede Helium** – Infraestrutura descentralizada de gateways baseada em blockchain.
-- **Protocolo MQTT** – Transporte leve e eficiente para mensagens IoT.
-- **Google Cloud Platform (GCP)**:
-  - **Cloud Pub/Sub** – Recebimento de mensagens LoRaWAN via integração com a Helium.
-  - **Cloud Functions** – Processamento automático dos dados recebidos.
-  - **BigQuery** – Armazenamento e consulta dos dados estruturados.
-  - **Cloud Storage** – Armazenamento de arquivos brutos com payloads recebidos.
+> As análises envolvem estimativa de horas ativas por dia, status do sensor, consumo médio por hora, além de agrupamentos por série para facilitar a visualização no TagoIO.
 
----
+## 🧠 Scripts e Lógicas Desenvolvidas
 
-## 📡 Funcionamento do Sistema
+Os scripts estão localizados na pasta [`tago/`](./firmware/tago/), e realizam tarefas como:
+- Contagem de mensagens por dia
+- Estimativa de consumo energético
+- Análise de standby e picos de corrente
+- Monitoramento do último dado recebido
+- Migração de dados entre dispositivos
 
-1. O ESP32 lê os dados do sensor DHT11 (temperatura e umidade).
-2. Os dados são enviados via LoRaWAN utilizando o módulo RFM95W.
-3. A rede Helium recebe os pacotes e os encaminha para um tópico MQTT.
-4. O MQTT entrega a mensagem no **Pub/Sub** da GCP.
-5. Uma **Cloud Function** é acionada automaticamente:
-   - Adiciona timestamp ao conteúdo.
-   - Salva o payload bruto no **Cloud Storage**.
-   - Salva os dados estruturados no **BigQuery** para consulta futura.
+## 🕰️ Código Legado
 
----
+O código legado, versões antigas de firmware e scripts descontinuados foram movidos para a pasta [`legacy/`](./legacy) e estão disponíveis apenas para consulta.
 
-## 🗂 Estrutura do Projeto
-```
-📦 helium-iot-security
-├── firmware/                  # Código para ESP32 + LoRa + sensores
-│   ├── src/                   # Código-fonte principal (.ino ou .cpp/.h)
-│   ├── lib/                   # Bibliotecas utilizadas no projeto (ex: LMIC custom, DHT)
-│   └── docs/                  # Esquemáticos de ligação, prints do serial monitor, etc.
-│
-├── cloud/                     # Código e infraestrutura em nuvem (GCP)
-│   ├── functions/             # Cloud Functions para tratar dados
-│   ├── pubsub/                # Scripts de criação/configuração de tópicos
-│   ├── bigquery/              # Scripts SQL para criação de tabelas
-│   └── storage/               # Scripts ou configurações para GCS
-│
-├── diagrams/                  # Diagramas da arquitetura (Lucidchart, draw.io etc.)
-│
-├── tests/                     # Testes locais e unitários
-│   ├── cloud_functions/       # Testes das funções em nuvem
-│   └── firmware/              # Testes simulados no Tinkercad ou plataformas similares
-│
-├── docs/                      # Documentação geral do projeto (PDFs, referências, etc.)
-│   └── tcc/                   # Entregas e versões do TCC (ex: TCC1, TCC2)
-│
-├── .gitignore
-└── README.md
-```
+## 📖 Documentação Completa
 
+A documentação detalhada com a fundamentação teórica, arquitetura, diagramas, testes, resultados e explicações estendidas dos scripts pode ser encontrada na [Wiki do projeto](https://github.com/Gzanini/helium-iot-security/wiki).
+
+## 👨‍🎓 Sobre
+
+Projeto de Conclusão de Curso (TCC) apresentado à Universidade do Vale do Rio dos Sinos — UNISINOS.  
+Orientadora: Prof.ª Me. Janaina Conceição Sutil Lemos.
 
 ---
-
-## 👨‍💻 Autor
-
-**Guilherme Zanini da Silva**  
-Aluno de Engenharia da Computação – Unisinos  
-Ano de conclusão: 2025
-
-**Orientadora:**  
-Profª. Me. Janaina Conceição Sutil Lemos
-
-
