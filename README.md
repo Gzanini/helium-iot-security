@@ -6,7 +6,7 @@ Este repositório contém o projeto desenvolvido por Guilherme Zanini da Silva c
 
 Investigar como a integração da **Blockchain Helium** com o protocolo **LoRaWAN** pode aumentar a segurança, a integridade e a confiabilidade na comunicação de dispositivos IoT, especialmente em ambientes sensíveis.
 
-## ⚙Estrutura do Projeto
+## Estrutura do Projeto
 
 O projeto é dividido em duas etapas práticas, com circuitos independentes:
 
