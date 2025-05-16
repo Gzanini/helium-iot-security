@@ -32,7 +32,7 @@ Os scripts estão localizados na pasta [`tago/`](./firmware/tago/), e realizam t
 - Monitoramento do último dado recebido
 - Migração de dados entre dispositivos
 
-## 🕰Código Legado
+## Código Legado
 
 O código legado, versões antigas de firmware e scripts descontinuados foram movidos para a pasta [`legacy/`](./legacy) e estão disponíveis apenas para consulta.
 
